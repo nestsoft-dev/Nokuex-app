@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nokuex/views/withdrawal/CryptoWithdrawalPage.dart';
 
+import 'FiatWithdrawalPage.dart';
+
 final pageIndexProvider = StateProvider((ref) => 0);
 
 class WithdrawalMainPage extends ConsumerStatefulWidget {
@@ -94,7 +96,10 @@ class _WithdrawalMainPageState extends ConsumerState<WithdrawalMainPage>
               child: TabBarView(
                   controller: _tabController,
                   physics: const NeverScrollableScrollPhysics(),
-                  children: [const Cryptowithdrawalpage(), Container()]),
+                  children: const [
+                    Cryptowithdrawalpage(),
+                    Fiatwithdrawalpage()
+                  ]),
             )
           ],
         ),

@@ -4,7 +4,10 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'package:nokuex/views/CryptoDeposit/CryptoDepositMainPage.dart';
+import 'package:nokuex/views/SwapCrypto/swapCryptoPage.dart';
 import 'package:nokuex/views/home/morePage.dart';
+import 'package:nokuex/views/notification/NotificationPage.dart';
 import 'package:nokuex/views/withdrawal/WithdrawalMainPage.dart';
 
 class HomePage extends ConsumerWidget {
@@ -193,6 +196,27 @@ class HomePage extends ConsumerWidget {
       {'title': 'Trade', 'image': 'assets/trade.svg'},
       {'title': 'More', 'image': 'assets/more.svg'}
     ];
+    onTap(int index) {
+      switch (index) {
+        case 0:
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => CryptoDepostMainPage()));
+
+          break;
+        case 1:
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => WithdrawalMainPage()));
+
+          break;
+        case 2:
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => SwapCryptoPage()));
+
+          break;
+        default:
+      }
+    }
+
     final size = MediaQuery.of(context).size;
     return SizedBox(
       height: size.height * .11,
@@ -211,6 +235,7 @@ class HomePage extends ConsumerWidget {
                             builder: (_) => const MorePage()));
                         return;
                       } else {
+                        onTap(index);
                         return;
                       }
                     },
@@ -333,8 +358,14 @@ class HomePage extends ConsumerWidget {
 
           break;
         case 1:
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => CryptoDepostMainPage()));
+
           break;
         case 2:
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => SwapCryptoPage()));
+
           break;
         default:
       }
@@ -463,15 +494,19 @@ class HomePage extends ConsumerWidget {
             SizedBox(
               width: size.width * .08,
             ),
-            Container(
-              height: size.height * .075,
-              width: size.width * .14,
-              decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 23, 25, 28),
-                  borderRadius: BorderRadius.circular(10)),
-              child: const Icon(
-                Iconsax.notification,
-                color: Colors.white,
+            GestureDetector(
+              onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationPage())),
+              child: Container(
+                height: size.height * .075,
+                width: size.width * .14,
+                decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 23, 25, 28),
+                    borderRadius: BorderRadius.circular(10)),
+                child: const Icon(
+                  Iconsax.notification,
+                  color: Colors.white,
+                ),
               ),
             )
           ],

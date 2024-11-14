@@ -4,6 +4,9 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'package:nokuex/views/CryptoDeposit/CryptoDepositMainPage.dart';
+import 'package:nokuex/views/SwapCrypto/swapCryptoPage.dart';
+import 'package:nokuex/views/withdrawal/WithdrawalMainPage.dart';
 
 class CardPage extends ConsumerStatefulWidget {
   const CardPage({super.key});
@@ -194,6 +197,27 @@ class _CardPageState extends ConsumerState<CardPage> {
       {'name': 'Swap', 'image': 'assets/bitcoin-convert.svg'},
     ];
 
+    onTap(int index) {
+      switch (index) {
+        case 0:
+          Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const WithdrawalMainPage()));
+
+          break;
+        case 1:
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => CryptoDepostMainPage()));
+
+          break;
+        case 2:
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => SwapCryptoPage()));
+
+          break;
+        default:
+      }
+    }
+
     return Container(
       height: size.height * .22,
       width: size.width * .9,
@@ -261,30 +285,33 @@ class _CardPageState extends ConsumerState<CardPage> {
                 itemBuilder: (_, index) {
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
-                    child: Container(
-                      width: size.width * .25,
-                      height: size.height * .005,
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                          color: index == 0
-                              ? const Color(0xffFF9B01)
-                              : Colors.white12,
-                          borderRadius: BorderRadius.circular(20)),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              _cardItem[index]['image']!,
-                            ),
-                            Text(
-                              ' ${_cardItem[index]['name']!}',
-                              style: GoogleFonts.roboto(
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white,
-                                  fontSize: size.height * 0.016),
-                            ),
-                          ],
+                    child: GestureDetector(
+                      onTap: () => onTap(index),
+                      child: Container(
+                        width: size.width * .25,
+                        height: size.height * .005,
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                            color: index == 0
+                                ? const Color(0xffFF9B01)
+                                : Colors.white12,
+                            borderRadius: BorderRadius.circular(20)),
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                _cardItem[index]['image']!,
+                              ),
+                              Text(
+                                ' ${_cardItem[index]['name']!}',
+                                style: GoogleFonts.roboto(
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.white,
+                                    fontSize: size.height * 0.016),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

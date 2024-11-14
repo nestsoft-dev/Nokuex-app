@@ -15,6 +15,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Nokuex',
       theme: ThemeData(
         scaffoldBackgroundColor: const Color(0xff202428),

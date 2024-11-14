@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 List<Map<String, String>> onBoardingPageData = [
   {
     'title': 'Trade like a pro!',
@@ -15,3 +17,5 @@ List<Map<String, String>> onBoardingPageData = [
     'image': 'assets/onboarding_three.png'
   },
 ];
+
+const myorange = Color(0xffFF9B01);

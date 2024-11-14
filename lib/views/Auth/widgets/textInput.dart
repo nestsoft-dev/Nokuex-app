@@ -10,12 +10,14 @@ class MyInput extends StatelessWidget {
     required this.isPassword,
     this.suffix,
     required this.type,
+    this.isReadonly = false,
   });
   final String title, hint;
   final TextEditingController controller;
   final bool isPassword;
   final Widget? suffix;
   final TextInputType type;
+  final bool? isReadonly;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,7 @@ class MyInput extends StatelessWidget {
           keyboardType: type,
           obscuringCharacter: '*',
           cursorColor: Colors.white,
+          readOnly: isReadonly!,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
               suffix: suffix,
