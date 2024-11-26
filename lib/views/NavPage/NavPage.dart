@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:nokuex/views/Trade/tradePage.dart';
 import 'package:nokuex/views/card/CardPage.dart';
 import 'package:nokuex/views/home/homepage.dart';
+import 'package:nokuex/views/stack/stakingPage.dart';
 
 class NavPage extends ConsumerStatefulWidget {
   const NavPage({super.key});
@@ -15,8 +17,8 @@ class _NavPageState extends ConsumerState<NavPage> {
   final List<Widget> _screen = [
     const HomePage(),
     const CardPage(),
-    Container(),
-    Container(),
+    const TradeMainPage(),
+    const StakingMainPage(),
   ];
 
   int index = 0;

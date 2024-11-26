@@ -64,7 +64,7 @@ class _CardPageState extends ConsumerState<CardPage> {
   Widget _listContainer(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Container(
-      height: size.height * .11,
+      // height: size.height * .11,
       width: size.width,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

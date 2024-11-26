@@ -14,10 +14,10 @@ class MorePage extends StatelessWidget {
       {'title': 'Trade', 'image': 'assets/trade.svg'},
       {'title': 'Staking', 'image': 'assets/more.svg'},
       {'title': 'Referral', 'image': 'assets/more.svg'},
-      {'title': 'International\nTransfer', 'image': 'assets/more.svg'}
+      {'title': 'On/off\nRamps', 'image': 'assets/more.svg'}
     ];
     return Scaffold(
-      backgroundColor: Color(0xff202428),
+      backgroundColor: const Color(0xff202428),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -55,7 +55,7 @@ class MorePage extends StatelessWidget {
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4,
                       mainAxisSpacing: size.height * .03,
-                      mainAxisExtent: size.height * .12),
+                      mainAxisExtent: size.height * .135),
                   itemCount: _cardItem.length,
                   itemBuilder: (_, index) {
                     return Padding(

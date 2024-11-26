@@ -3,7 +3,7 @@ import 'dart:ui';
 List<Map<String, String>> onBoardingPageData = [
   {
     'title': 'Trade like a pro!',
-    'des': 'Grow your investments with Nokue trading tools built for you.',
+    'des': 'Grow your investments with Nokuex trading tools built for you.',
     'image': 'assets/onboarding_one.png'
   },
   {
@@ -13,7 +13,7 @@ List<Map<String, String>> onBoardingPageData = [
   },
   {
     'title': 'Start Growing',
-    'des': 'Grow your investments with Nokue trading tools built for you.',
+    'des': 'Grow your investments with Nokuex trading tools built for you.',
     'image': 'assets/onboarding_three.png'
   },
 ];

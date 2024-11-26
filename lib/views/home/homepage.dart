@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:nokuex/views/CryptoDeposit/CryptoDepositMainPage.dart';
+import 'package:nokuex/views/Profile/profilePage.dart';
 import 'package:nokuex/views/SwapCrypto/swapCryptoPage.dart';
 import 'package:nokuex/views/home/morePage.dart';
 import 'package:nokuex/views/notification/NotificationPage.dart';
@@ -93,7 +94,7 @@ class HomePage extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Container(
-              height: size.height * .11,
+              //  height: size.height * .11,
               width: size.width,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -479,11 +480,15 @@ class HomePage extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          height: size.height * .08,
-          width: size.width * .18,
-          decoration: BoxDecoration(
-              color: Colors.grey, borderRadius: BorderRadius.circular(10)),
+        GestureDetector(
+          onTap: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const ProfilePage())),
+          child: Container(
+            height: size.height * .08,
+            width: size.width * .18,
+            decoration: BoxDecoration(
+                color: Colors.grey, borderRadius: BorderRadius.circular(10)),
+          ),
         ),
         Row(
           children: [

@@ -130,6 +130,7 @@ class _OnBoardingPageState extends ConsumerState<OnBoardingPage> {
                 controller: _pageController, // PageController
                 count: onBoardingPageData.length,
                 effect: WormEffect(
+                    activeDotColor: myorange,
                     dotHeight: size.height * .01,
                     dotWidth: _pageIndex == index
                         ? size.width * .07
