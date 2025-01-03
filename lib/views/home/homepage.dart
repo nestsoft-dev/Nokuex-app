@@ -4,6 +4,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'package:nokuex/models/userModel.dart';
+import 'package:nokuex/server/ServerCalls.dart';
 import 'package:nokuex/views/CryptoDeposit/CryptoDepositMainPage.dart';
 import 'package:nokuex/views/Profile/profilePage.dart';
 import 'package:nokuex/views/SwapCrypto/swapCryptoPage.dart';
@@ -17,69 +19,91 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
+    final user = ref.watch(userProvider);
+    final coinBalanceAsyncValue = ref.watch(coinBalanceStreamProvider);
     return SizedBox(
       height: size.height,
       width: size.width,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: size.width * 0.05, vertical: size.height * 0.05),
-          child: Column(
-            children: [
-              SizedBox(
-                height: size.height * .02,
-              ),
-              _top(context),
-              SizedBox(
-                height: size.height * .02,
-              ),
-              _moneyBox(context),
-              SizedBox(
-                height: size.height * .02,
-              ),
-              _btcCard(context),
-              SizedBox(
-                height: size.height * .02,
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Services',
-                  style: GoogleFonts.roboto(
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                      fontSize: size.height * 0.02),
-                ),
-              ),
+      child: FutureBuilder(
+          future: Servercalls().getUserDetails(context, ref),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                      horizontal: size.width * 0.05,
+                      vertical: size.height * 0.05),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: size.height * .02,
+                      ),
+                      _top(context),
+                      SizedBox(
+                        height: size.height * .02,
+                      ),
+                      _moneyBox(context, snapshot.data!),
+                      SizedBox(
+                        height: size.height * .02,
+                      ),
+                      _btcCard(context),
+                      SizedBox(
+                        height: size.height * .02,
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Services',
+                          style: GoogleFonts.roboto(
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey,
+                              fontSize: size.height * 0.02),
+                        ),
+                      ),
 
-              SizedBox(
-                height: size.height * .02,
-              ),
-              //service card
-              _serviceCard(context),
-              SizedBox(
-                height: size.height * .04,
-              ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'My Assets',
-                  style: GoogleFonts.roboto(
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey,
-                      fontSize: size.height * 0.02),
-                ),
-              ),
-              SizedBox(
-                height: size.height * .02,
-              ),
+                      SizedBox(
+                        height: size.height * .02,
+                      ),
+                      //service card
+                      _serviceCard(context),
+                      SizedBox(
+                        height: size.height * .04,
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'My Assets',
+                          style: GoogleFonts.roboto(
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey,
+                              fontSize: size.height * 0.02),
+                        ),
+                      ),
+                      SizedBox(
+                        height: size.height * .02,
+                      ),
 
-              //assets cards
-              _assetsCard(context)
-            ],
-          ),
-        ),
-      ),
+                      //assets cards
+                      _assetsCard(context)
+                    ],
+                  ),
+                ),
+              );
+            } else if (snapshot.hasError) {
+              return const Center(
+                child: Text(
+                  'Error occured',
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            } else {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
+              );
+            }
+          }),
     );
   }
 
@@ -336,9 +360,9 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _moneyBox(BuildContext context) {
+  Widget _moneyBox(BuildContext context, User user) {
     final size = MediaQuery.of(context).size;
-    final usdt = '1534.36';
+    final usdt = user.nairaBalance.toString();
     String formattedAmount = NumberFormat.currency(
       locale: 'en_NG',
       symbol: '\$',
@@ -399,7 +423,7 @@ class HomePage extends ConsumerWidget {
                 child: Row(
                   children: [
                     Text(
-                      'USD',
+                      'NGN',
                       style: GoogleFonts.roboto(
                           fontWeight: FontWeight.w400,
                           color: Colors.white,

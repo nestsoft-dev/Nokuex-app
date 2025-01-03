@@ -3,10 +3,13 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nokuex/server/ServerCalls.dart';
 import 'package:nokuex/views/NavPage/NavPage.dart';
+import 'package:nokuex/views/utils/myToast.dart';
 import 'package:pinput/pinput.dart';
 
 import 'package:nokuex/views/Auth/widgets/textInput.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'login/loginPage.dart';
 
@@ -100,6 +103,9 @@ class _CreateFreeAccountState extends State<CreateFreeAccount> {
   }
 
   String? selectedCountryCode;
+
+  bool loading = false;
+  bool isCheck = false;
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +234,10 @@ class _CreateFreeAccountState extends State<CreateFreeAccount> {
             SizedBox(
               height: size.height * .025,
             ),
-            Center(child: _buttonDesign(context, widget.controller)),
+            Center(
+                child: loading
+                    ? const CircularProgressIndicator.adaptive()
+                    : _buttonDesign(context, widget.controller)),
             SizedBox(
               height: size.height * .025,
             ),
@@ -264,16 +273,36 @@ class _CreateFreeAccountState extends State<CreateFreeAccount> {
   Widget _buttonDesign(BuildContext context, PageController _pageController) {
     final size = MediaQuery.of(context).size;
     return GestureDetector(
-      onTap: () {
-        // if (_pageIndex == 2) {
-        //   Navigator.of(context).pushReplacement(
-        //       MaterialPageRoute(builder: (_) => const RegisterPage()));
-        //   return;
-        // }
-        _pageController.nextPage(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.linearToEaseOut);
-        return;
+      onTap: () async {
+        if (selectedCountryCode == null) {
+          errorToast('Please select country code');
+          return;
+        }
+        if (_emailController.text.isEmpty ||
+            _numberController.text.isEmpty ||
+            _firstController.text.isEmpty ||
+            _lastController.text.isEmpty) {
+          errorToast('Please fill the needed details');
+          return;
+        }
+
+        setState(() {
+          loading = true;
+        });
+
+        await Servercalls()
+            .verifyEmailorPhone(
+                _emailController.text,
+                selectedCountryCode! + _numberController.text,
+                _firstController.text,
+                _lastController.text,
+                context,
+                _pageController)
+            .whenComplete(() {
+          setState(() {
+            loading = false;
+          });
+        });
       },
       child: Container(
         height: size.height * .07,
@@ -318,6 +347,25 @@ class _VerifyEmailorPhoneState extends State<VerifyEmailorPhone> {
 
   final _pinCode = TextEditingController();
 
+  String email = '';
+  String phoneNumber = '';
+  String firstname = '';
+  bool loading = false;
+
+  getDetails() async {
+    final SharedPreferences _pref = await SharedPreferences.getInstance();
+    email = _pref.getString('email') ?? '';
+    phoneNumber = _pref.getString('phonenumber') ?? '';
+    firstname = _pref.getString('firstname') ?? '';
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getDetails();
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -344,7 +392,7 @@ class _VerifyEmailorPhoneState extends State<VerifyEmailorPhone> {
         Row(
           children: [
             Text(
-              '+2349138473122 ',
+              '$phoneNumber ',
               style: GoogleFonts.roboto(
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -358,7 +406,7 @@ class _VerifyEmailorPhoneState extends State<VerifyEmailorPhone> {
                   fontSize: size.height * .016),
             ),
             Text(
-              'obettaikenna19@gmail.com',
+              '$email',
               style: GoogleFonts.roboto(
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -435,16 +483,14 @@ class _VerifyEmailorPhoneState extends State<VerifyEmailorPhone> {
   Widget _buttonDesign(BuildContext context, PageController _pageController) {
     final size = MediaQuery.of(context).size;
     return GestureDetector(
-      onTap: () {
-        // if (_pageIndex == 2) {
-        //   Navigator.of(context).pushReplacement(
-        //       MaterialPageRoute(builder: (_) => const RegisterPage()));
-        //   return;
-        // }
-        _pageController.nextPage(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.linearToEaseOut);
-        return;
+      onTap: () async {
+        setState(() {
+          loading = true;
+        });
+        await Servercalls().resendOTP(context);
+        setState(() {
+          loading = false;
+        });
       },
       child: Container(
         height: size.height * .07,
@@ -481,6 +527,7 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
   final _password = TextEditingController();
   bool isPassword = true;
   bool isBiometric = false;
+  bool loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -489,7 +536,7 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Welcome Obetta',
+          'Welcome',
           style: GoogleFonts.roboto(
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -618,7 +665,10 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
         SizedBox(
           height: size.height * .035,
         ),
-        Center(child: _buttonDesign(context, widget.controller))
+        Center(
+            child: loading
+                ? const CircularProgressIndicator.adaptive()
+                : _buttonDesign(context, widget.controller))
       ],
     );
   }
@@ -626,16 +676,21 @@ class _CreatePasswordPageState extends State<CreatePasswordPage> {
   Widget _buttonDesign(BuildContext context, PageController _pageController) {
     final size = MediaQuery.of(context).size;
     return GestureDetector(
-      onTap: () {
-        // if (_pageIndex == 2) {
-        //   Navigator.of(context).pushReplacement(
-        //       MaterialPageRoute(builder: (_) => const RegisterPage()));
-        //   return;
-        // }
-        _pageController.nextPage(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.linearToEaseOut);
-        return;
+      onTap: () async {
+        if (_password.text.isEmpty) {
+          errorToast('Please provide password');
+          return;
+        }
+        setState(() {
+          loading = true;
+        });
+        await Servercalls()
+            .createUser(context, _password.text, _pageController)
+            .whenComplete(() {
+          setState(() {
+            loading = false;
+          });
+        });
       },
       child: Container(
         height: size.height * .07,
@@ -756,8 +811,13 @@ class _CreateAppCodeState extends State<CreateAppCode> {
   Widget _buttonDesign(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return GestureDetector(
-      onTap: () => Navigator.of(context)
-          .pushReplacement(MaterialPageRoute(builder: (_) => const NavPage())),
+      onTap: () async {
+        if (_pinCode.text.isEmpty) {
+          errorToast('Please set pin code');
+          return;
+        }
+        await Servercalls().setPin(context, _pinCode.text);
+      },
       child: Container(
         height: size.height * .07,
         width: size.width * .62,
