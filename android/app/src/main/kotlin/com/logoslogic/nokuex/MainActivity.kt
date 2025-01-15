@@ -1,4 +1,4 @@
-package com.logoslogic.nokuex
+package com.leuxsdevelopement.nokuex
 
 import io.flutter.embedding.android.FlutterActivity
 

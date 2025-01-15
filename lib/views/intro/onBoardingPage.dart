@@ -53,11 +53,17 @@ class _OnBoardingPageState extends ConsumerState<OnBoardingPage> {
             'assets/nokuex.png',
             height: size.height * .05,
           ),
-          Text(
-            'Login',
-            maxLines: 1,
-            style:
-                TextStyle(color: Colors.white, fontSize: size.height * 0.018),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => const LoginPage()));
+            },
+            child: Text(
+              'Login',
+              maxLines: 1,
+              style:
+                  TextStyle(color: Colors.white, fontSize: size.height * 0.018),
+            ),
           )
         ],
       ),

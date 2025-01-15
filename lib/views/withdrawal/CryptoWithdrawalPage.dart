@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:nokuex/models/myCoinModel.dart';
+import 'package:nokuex/server/ServerCalls.dart';
+import 'package:nokuex/views/utils/myToast.dart';
 import 'package:nokuex/views/withdrawal/WithdrawalMainPage.dart';
 
 import '../utils/passcodeInput.dart';
+
+final selectedCryptoWithdrawalProvider =
+    StateProvider<CoinBalance?>((ref) => null);
 
 class Cryptowithdrawalpage extends ConsumerStatefulWidget {
   const Cryptowithdrawalpage({super.key});
@@ -437,9 +443,11 @@ class _CryptowithdrawalpageState extends ConsumerState<Cryptowithdrawalpage> {
   Widget _pageOne(BuildContext context, PageController pageController) {
     final size = MediaQuery.of(context).size;
 
+    final userCoins = ref.watch(usersCoinProvider);
+
     return Column(
       children: [
-        _moneyBox(context),
+        _moneyBox(context, userCoins),
         SizedBox(
           height: size.height * .02,
         ),
@@ -449,6 +457,10 @@ class _CryptowithdrawalpageState extends ConsumerState<Cryptowithdrawalpage> {
         ),
         GestureDetector(
           onTap: () {
+            if (ref.read(selectedCryptoWithdrawalProvider.notifier).state ==
+                null) {
+              return errorToast('Please select coin');
+            }
             pageController.nextPage(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.linearToEaseOut);
@@ -496,6 +508,7 @@ class _CryptowithdrawalpageState extends ConsumerState<Cryptowithdrawalpage> {
         ),
         TextFormField(
           controller: controller,
+          readOnly: true,
           keyboardType: TextInputType.number,
           style: GoogleFonts.roboto(
               fontWeight: FontWeight.bold,
@@ -517,107 +530,119 @@ class _CryptowithdrawalpageState extends ConsumerState<Cryptowithdrawalpage> {
     );
   }
 
-  Widget _moneyBox(BuildContext context) {
+  Widget _moneyBox(BuildContext context, List<CoinBalance> coins) {
     final size = MediaQuery.of(context).size;
-    final usdt = '1534.36';
-    String formattedAmount = NumberFormat().format(double.tryParse(usdt));
+    final selectedCoin = ref.watch(selectedCryptoWithdrawalProvider);
+    final balance = selectedCoin != null
+        ? selectedCoin.walletBalance
+        : coins.isNotEmpty
+            ? coins[0].walletBalance
+            : null;
 
-    final rate = '1534.00';
-    String formattedrate = NumberFormat.currency(
-      locale: 'en_NG',
-      symbol: '\$',
-      decimalDigits: 2,
-    ).format(double.tryParse(usdt));
-    return Container(
-      height: size.height * .2,
-      width: size.width * .9,
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-          color: Colors.black, borderRadius: BorderRadius.circular(15)),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Wallet Balance',
-                style: GoogleFonts.roboto(
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey,
-                    fontSize: size.height * 0.016),
-              ),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(3).copyWith(left: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white12,
-                      borderRadius: BorderRadius.circular(15),
+    return coins.isEmpty
+        ? const Center(
+            child: Text(
+              'Please Deposit',
+              style: TextStyle(color: Colors.white),
+            ),
+          )
+        : Container(
+            height: size.height * .2,
+            width: size.width * .9,
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+                color: Colors.black, borderRadius: BorderRadius.circular(15)),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Wallet Balance',
+                      style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey,
+                          fontSize: size.height * 0.016),
                     ),
-                    child: Row(
+                    Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(2.0).copyWith(right: 5),
-                          child: SizedBox(
-                              height: size.height * .02,
-                              width: size.width * .04,
-                              child: Placeholder()),
-                        ),
-                        Text(
-                          'USDT',
-                          style: GoogleFonts.roboto(
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white,
-                              fontSize: size.height * 0.016),
-                        ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        const Icon(
-                          Icons.arrow_drop_down,
-                          color: Colors.white,
+                        Container(
+                          padding: const EdgeInsets.all(3).copyWith(left: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white12,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(2.0)
+                                    .copyWith(right: 5),
+                                child: SizedBox(
+                                    height: size.height * .02,
+                                    width: size.width * .04,
+                                    child: Placeholder()),
+                              ),
+                              Text(
+                                selectedCoin != null
+                                    ? selectedCoin!.coin ?? ''
+                                    : coins[0].coin ?? '',
+                                style: GoogleFonts.roboto(
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.white,
+                                    fontSize: size.height * 0.016),
+                              ),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              const Icon(
+                                Icons.arrow_drop_down,
+                                color: Colors.white,
+                              )
+                            ],
+                          ),
                         )
                       ],
+                    )
+                  ],
+                ),
+                SizedBox(
+                  height: size.height * .01,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      balance!,
+                      style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                          fontSize: size.height * 0.05),
                     ),
-                  )
-                ],
-              )
-            ],
-          ),
-          SizedBox(
-            height: size.height * .01,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                formattedAmount,
-                style: GoogleFonts.roboto(
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                    fontSize: size.height * 0.05),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  "USDT",
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        selectedCoin != null
+                            ? selectedCoin!.marketRate ?? ''
+                            : coins[0].marketRate ?? '',
+                        style: GoogleFonts.roboto(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            fontSize: size.height * 0.016),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  selectedCoin != null
+                      ? selectedCoin!.nairaBalance ?? ''
+                      : coins[0].nairaBalance ?? '',
                   style: GoogleFonts.roboto(
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
                       fontSize: size.height * 0.016),
                 ),
-              ),
-            ],
-          ),
-          Text(
-            formattedrate,
-            style: GoogleFonts.roboto(
-                fontWeight: FontWeight.w400,
-                color: Colors.white,
-                fontSize: size.height * 0.016),
-          ),
-        ],
-      ),
-    );
+              ],
+            ),
+          );
   }
 }

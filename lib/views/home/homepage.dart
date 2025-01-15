@@ -21,6 +21,7 @@ class HomePage extends ConsumerWidget {
     final size = MediaQuery.of(context).size;
     final user = ref.watch(userProvider);
     final coinBalanceAsyncValue = ref.watch(coinBalanceStreamProvider);
+
     return SizedBox(
       height: size.height,
       width: size.width,
@@ -46,7 +47,7 @@ class HomePage extends ConsumerWidget {
                       SizedBox(
                         height: size.height * .02,
                       ),
-                      _btcCard(context),
+                      _btcCard(context, ref),
                       SizedBox(
                         height: size.height * .02,
                       ),
@@ -84,7 +85,7 @@ class HomePage extends ConsumerWidget {
                       ),
 
                       //assets cards
-                      _assetsCard(context)
+                      _assetsCard(context, ref)
                     ],
                   ),
                 ),
@@ -107,111 +108,129 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _assetsCard(BuildContext context) {
+  Widget _assetsCard(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
-    return ListView.builder(
-        padding: EdgeInsets.zero,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 10,
-        itemBuilder: (_, index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              //  height: size.height * .11,
-              width: size.width,
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: const Color(0xff252A30)),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          //icon
-                          SvgPicture.asset(
-                            'assets/btc.svg',
-                          ),
-                          SizedBox(
-                            width: size.width * .02,
-                          ),
-
-                          //name
-                          Text(
-                            'Bitcoin',
-                            style: GoogleFonts.roboto(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: size.height * 0.02),
-                          ),
-                        ],
-                      ),
-
-                      //price
-                      Text(
-                        '\$4,500',
-                        style: GoogleFonts.roboto(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: size.height * 0.02),
-                      ),
-                    ],
+    final userCoin = ref.watch(coinBalanceStreamProvider);
+    return userCoin.when(
+        data: (data) {
+          return data.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Your Wallet is Empty',
+                    style: TextStyle(color: Colors.white),
                   ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      //chart, percent, bal
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          SizedBox(
-                            height: size.height * .05,
-                            width: size.width * .155,
-                            child: Placeholder(),
-                          ),
-                          SizedBox(
-                            width: size.width * .02,
-                          ),
-                          Text(
-                            '3.5%',
-                            style: GoogleFonts.roboto(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.red,
-                                fontSize: size.height * 0.02),
-                          ),
-                          SizedBox(
-                            width: size.width * .02,
-                          ),
-                          Text(
-                            '\$3.5',
-                            style: GoogleFonts.roboto(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                                fontSize: size.height * 0.02),
-                          ),
-                        ],
-                      ),
+                )
+              : ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: data.length,
+                  itemBuilder: (_, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Container(
+                        //  height: size.height * .11,
+                        width: size.width,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: const Color(0xff252A30)),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    //icon
+                                    SvgPicture.asset(
+                                      'assets/btc.svg',
+                                    ),
+                                    SizedBox(
+                                      width: size.width * .02,
+                                    ),
 
-                      //coin Balance
-                      Text(
-                        '0.0000000045 BTC',
-                        style: GoogleFonts.roboto(
-                            fontWeight: FontWeight.w400,
-                            color: Colors.grey,
-                            fontSize: size.height * 0.02),
+                                    //name
+                                    Text(
+                                      data[index].coin ?? '',
+                                      style: GoogleFonts.roboto(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          fontSize: size.height * 0.02),
+                                    ),
+                                  ],
+                                ),
+
+                                //price
+                                Text(
+                                  '₦${data[index].nairaBalance}',
+                                  style: GoogleFonts.roboto(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      fontSize: size.height * 0.02),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                //chart, percent, bal
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    SizedBox(
+                                      height: size.height * .05,
+                                      width: size.width * .155,
+                                      child: Placeholder(),
+                                    ),
+                                    SizedBox(
+                                      width: size.width * .02,
+                                    ),
+                                    Text(
+                                      '3.5%',
+                                      style: GoogleFonts.roboto(
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.red,
+                                          fontSize: size.height * 0.02),
+                                    ),
+                                    SizedBox(
+                                      width: size.width * .02,
+                                    ),
+                                    Text(
+                                      '\$3.5',
+                                      style: GoogleFonts.roboto(
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white,
+                                          fontSize: size.height * 0.02),
+                                    ),
+                                  ],
+                                ),
+
+                                //coin Balance
+                                Text(
+                                  '${data[index].walletBalance} ${data[index].coin}}',
+                                  style: GoogleFonts.roboto(
+                                      fontWeight: FontWeight.w400,
+                                      color: Colors.grey,
+                                      fontSize: size.height * 0.02),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
                       ),
-                    ],
-                  )
-                ],
-              ),
+                    );
+                  });
+        },
+        error: (error, trace) => const Text(
+              'Error getting balance',
+              style: TextStyle(color: Colors.white),
             ),
-          );
-        });
+        loading: () => const Center(
+              child: CircularProgressIndicator.adaptive(),
+            ));
   }
 
   Widget _serviceCard(BuildContext context) {
@@ -300,64 +319,94 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _btcCard(BuildContext context) {
+  Widget _btcCard(BuildContext context, WidgetRef ref) {
+    final coinFeedData = ref.watch(coinlistProvider);
     final size = MediaQuery.of(context).size;
-    return Container(
-      width: size.width,
-      height: size.height * .065,
-      padding: EdgeInsets.all(10),
-      decoration: BoxDecoration(
-          color: Colors.black, borderRadius: BorderRadius.circular(15)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              SvgPicture.asset(
-                'assets/btc.svg',
-                color: Color(0xffFF9B01),
-              ),
-              SizedBox(
-                width: size.width * .035,
-              ),
-              Text(
-                'BTC',
-                style: GoogleFonts.roboto(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: size.height * 0.02),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Text(
-                '0.00000045',
-                style: GoogleFonts.roboto(
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xff39A798),
-                    fontSize: size.height * 0.02),
-              ),
-              //chart
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SizedBox(
-                  width: size.width * .1,
-                  child: Placeholder(),
-                ),
-              ),
-              Text(
-                '3.8%',
-                style: GoogleFonts.roboto(
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xff39A798),
-                    fontSize: size.height * 0.02),
-              ),
-            ],
-          )
-        ],
-      ),
-    );
+    return coinFeedData.when(
+        data: (data) {
+          return SizedBox(
+            width: size.width,
+            height: size.height * .065,
+            child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: data.length,
+                itemBuilder: (_, index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Container(
+                      width: size.width,
+                      height: size.height * .05,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(15)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Image.network(data[index].iconUrl!),
+                              SizedBox(
+                                width: size.width * .035,
+                              ),
+                              Text(
+                                data[index].shortName!,
+                                style: GoogleFonts.roboto(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontSize: size.height * 0.02),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                data[index].currentMarketPrice!,
+                                style: GoogleFonts.roboto(
+                                    fontWeight: FontWeight.w500,
+                                    color: data[index].hasIncreased == true
+                                        ? const Color(0xff39A798)
+                                        : Colors.red,
+                                    fontSize: size.height * 0.02),
+                              ),
+                              //chart
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  width: size.width * .1,
+                                  child: Icon(
+                                    Iconsax.chart,
+                                    color: data[index].hasIncreased == true
+                                        ? Colors.green
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                data[index].increasePercentage!,
+                                style: GoogleFonts.roboto(
+                                    fontWeight: FontWeight.w500,
+                                    color: data[index].hasIncreased == true
+                                        ? const Color(0xff39A798)
+                                        : Colors.red,
+                                    fontSize: size.height * 0.02),
+                              ),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+          );
+        },
+        error: (error, trace) => const Text(
+              'Error getting data',
+              style: TextStyle(color: Colors.white),
+            ),
+        loading: () => const Center(
+              child: CircularProgressIndicator.adaptive(),
+            ));
   }
 
   Widget _moneyBox(BuildContext context, User user) {
@@ -365,7 +414,7 @@ class HomePage extends ConsumerWidget {
     final usdt = user.nairaBalance.toString();
     String formattedAmount = NumberFormat.currency(
       locale: 'en_NG',
-      symbol: '\$',
+      symbol: '₦',
       decimalDigits: 2,
     ).format(double.tryParse(usdt));
 

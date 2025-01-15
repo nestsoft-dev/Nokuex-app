@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nokuex/server/ServerCalls.dart';
 
 class PreferencesPage extends StatefulWidget {
   const PreferencesPage({super.key});
@@ -13,48 +15,59 @@ class _PreferencesPageState extends State<PreferencesPage> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: size.height * .08,
-            ),
-            GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
-                child: const Icon(
-                  Icons.arrow_back_ios_new,
-                  color: Colors.grey,
-                )),
-            SizedBox(
-              height: size.height * .03,
-            ),
-            Text(
-              'Preferences',
-              style: GoogleFonts.roboto(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
-                  fontSize: size.height * 0.032),
-            ),
-            SizedBox(
-              height: size.height * .042,
-            ),
-            _cardTitle(
-                context, 'Theme', 'Dark Mode', 'Use dark mode theme', null),
-            SizedBox(
-              height: size.height * .05,
-            ),
-            _cardTitle(context, 'Notifications', 'Email',
-                'Get notifications via email', true),
-            SizedBox(
-              height: size.height * .05,
-            ),
-            _cardTitle(context, 'Security', '2FA',
-                'Use 2FA for authorizing transactions', null),
-          ],
-        ),
-      ),
+      body: Consumer(builder: (_, ref, child) {
+        final user = ref.watch(userProvider);
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: size.height * .08,
+              ),
+              GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: Colors.grey,
+                  )),
+              SizedBox(
+                height: size.height * .03,
+              ),
+              Text(
+                'Preferences',
+                style: GoogleFonts.roboto(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    fontSize: size.height * 0.032),
+              ),
+              SizedBox(
+                height: size.height * .042,
+              ),
+              _cardTitle(
+                  context, 'Theme', 'Dark Mode', 'Use dark mode theme', true),
+              SizedBox(
+                height: size.height * .05,
+              ),
+              _cardTitle(
+                  context,
+                  'Notifications',
+                  'Email',
+                  'Get notifications via email',
+                  user!.emailNotification! ?? false),
+              SizedBox(
+                height: size.height * .05,
+              ),
+              _cardTitle(
+                  context,
+                  'Security',
+                  '2FA',
+                  'Use 2FA for authorizing transactions',
+                  user!.twoFA! ?? false),
+            ],
+          ),
+        );
+      }),
     );
   }
 

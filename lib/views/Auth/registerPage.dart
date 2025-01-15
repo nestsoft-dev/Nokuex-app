@@ -1,4 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:async';
+
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -197,8 +199,8 @@ class _CreateFreeAccountState extends State<CreateFreeAccount> {
                               });
                             },
                             // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
-                            initialSelection: 'IT',
-                            favorite: ['+39', 'FR'],
+                            initialSelection: '+234',
+                            // favorite: ['+39', 'FR'],
                             // optional. Shows only country name and flag
                             showCountryOnly: false,
                             // optional. Shows only country name and flag when popup is closed.
@@ -222,7 +224,7 @@ class _CreateFreeAccountState extends State<CreateFreeAccount> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                       filled: true,
-                      hintText: '+234',
+                      hintText: '9123...',
                       hintStyle: const TextStyle(color: Colors.grey),
                       fillColor: Colors.grey.withOpacity(0.15),
                       border: OutlineInputBorder(
@@ -333,10 +335,40 @@ class VerifyEmailorPhone extends StatefulWidget {
 }
 
 class _VerifyEmailorPhoneState extends State<VerifyEmailorPhone> {
+  int _seconds = 60; // Total seconds for countdown
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+    getDetails();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_seconds > 0) {
+        setState(() {
+          _seconds--;
+        });
+      } else {
+        timer.cancel();
+        // Perform any action after the timer ends
+        print("Countdown Complete!");
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel the timer to prevent memory leaks
+    super.dispose();
+  }
+
   final defaultPinTheme = PinTheme(
     width: 56,
     height: 56,
-    textStyle: TextStyle(
+    textStyle: const TextStyle(
         fontSize: 20, color: Colors.white, fontWeight: FontWeight.w600),
     decoration: BoxDecoration(
       color: Colors.grey.withOpacity(0.15),
@@ -358,12 +390,6 @@ class _VerifyEmailorPhoneState extends State<VerifyEmailorPhone> {
     phoneNumber = _pref.getString('phonenumber') ?? '';
     firstname = _pref.getString('firstname') ?? '';
     setState(() {});
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getDetails();
   }
 
   @override
@@ -463,13 +489,26 @@ class _VerifyEmailorPhoneState extends State<VerifyEmailorPhone> {
                   color: Colors.white,
                   fontSize: size.height * .016),
             ),
-            Text(
-              '60 secs',
-              style: GoogleFonts.roboto(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                  fontSize: size.height * .016),
-            ),
+            _seconds == 0
+                ? GestureDetector(
+                    onTap: () async {
+                      await Servercalls().resendOTP(context);
+                    },
+                    child: Text(
+                      'Resend OTP',
+                      style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: size.height * .016),
+                    ),
+                  )
+                : Text(
+                    '$_seconds secs',
+                    style: GoogleFonts.roboto(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                        fontSize: size.height * .016),
+                  ),
           ],
         ),
         SizedBox(
@@ -482,33 +521,41 @@ class _VerifyEmailorPhoneState extends State<VerifyEmailorPhone> {
 
   Widget _buttonDesign(BuildContext context, PageController _pageController) {
     final size = MediaQuery.of(context).size;
-    return GestureDetector(
-      onTap: () async {
-        setState(() {
-          loading = true;
-        });
-        await Servercalls().resendOTP(context);
-        setState(() {
-          loading = false;
-        });
-      },
-      child: Container(
-        height: size.height * .07,
-        width: size.width * .62,
-        decoration: BoxDecoration(
-            color: Colors.green,
-            borderRadius: BorderRadius.circular(size.height * .025)),
-        child: Center(
-          child: Text(
-            'Verify',
-            style: GoogleFonts.roboto(
-                fontWeight: FontWeight.w400,
-                color: Colors.white,
-                fontSize: size.height * 0.016),
-          ),
-        ),
-      ),
-    );
+    return loading
+        ? const Center(
+            child: CircularProgressIndicator.adaptive(),
+          )
+        : GestureDetector(
+            onTap: () async {
+              setState(() {
+                loading = true;
+              });
+
+              await Servercalls()
+                  .verifyOTP(context, _pageController, _pinCode.text)
+                  .whenComplete(() {
+                setState(() {
+                  loading = false;
+                });
+              });
+            },
+            child: Container(
+              height: size.height * .07,
+              width: size.width * .62,
+              decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(size.height * .025)),
+              child: Center(
+                child: Text(
+                  'Verify',
+                  style: GoogleFonts.roboto(
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      fontSize: size.height * 0.016),
+                ),
+              ),
+            ),
+          );
   }
 }
 

@@ -4,6 +4,8 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'package:nokuex/models/myCoinModel.dart';
+import 'package:nokuex/server/ServerCalls.dart';
 import 'package:nokuex/views/CryptoDeposit/CryptoDepositMainPage.dart';
 import 'package:nokuex/views/SwapCrypto/swapCryptoPage.dart';
 import 'package:nokuex/views/withdrawal/WithdrawalMainPage.dart';
@@ -18,6 +20,8 @@ class CardPage extends ConsumerStatefulWidget {
 class _CardPageState extends ConsumerState<CardPage> {
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(userProvider);
+    final userAssets = ref.watch(usersCoinProvider);
     final size = MediaQuery.of(context).size;
     return SingleChildScrollView(
       child: Padding(
@@ -38,7 +42,7 @@ class _CardPageState extends ConsumerState<CardPage> {
             SizedBox(
               height: size.height * .03,
             ),
-            _moneyBox(context),
+            _moneyBox(context, user!.nairaBalance.toString()),
             SizedBox(
               height: size.height * .01,
             ),
@@ -46,25 +50,31 @@ class _CardPageState extends ConsumerState<CardPage> {
             SizedBox(
               height: size.height * .01,
             ),
-            ListView.builder(
-                padding: EdgeInsets.zero,
-                shrinkWrap: true,
-                itemBuilder: (_, index) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _listContainer(context),
+            userAssets.isEmpty
+                ? const Center(
+                    child: Text(
+                      'Your Wallet is Empty',
+                      style: TextStyle(color: Colors.white),
                     ),
-                itemCount: 10,
-                physics: const BouncingScrollPhysics())
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemBuilder: (_, index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _listContainer(context, userAssets[index]),
+                        ),
+                    itemCount: userAssets.length,
+                    physics: const BouncingScrollPhysics())
           ],
         ),
       ),
     );
   }
 
-  Widget _listContainer(BuildContext context) {
+  Widget _listContainer(BuildContext context, CoinBalance coinBalance) {
     final size = MediaQuery.of(context).size;
     return Container(
-      // height: size.height * .11,
       width: size.width,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -83,7 +93,7 @@ class _CardPageState extends ConsumerState<CardPage> {
                     width: size.width * .02,
                   ),
                   Text(
-                    'Obetta',
+                    coinBalance.coin!,
                     style: GoogleFonts.roboto(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -92,7 +102,7 @@ class _CardPageState extends ConsumerState<CardPage> {
                 ],
               ),
               Text(
-                '\$4,500',
+                coinBalance.nairaBalance!,
                 style: GoogleFonts.roboto(
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -109,7 +119,7 @@ class _CardPageState extends ConsumerState<CardPage> {
               Row(
                 children: [
                   Text(
-                    'BTC',
+                    coinBalance.coin ?? '',
                     style: GoogleFonts.roboto(
                         fontWeight: FontWeight.w500,
                         color: Colors.white,
@@ -128,7 +138,7 @@ class _CardPageState extends ConsumerState<CardPage> {
                 ],
               ),
               Text(
-                '0.00000045 BTC',
+                '${coinBalance.walletBalance} ${coinBalance.coin}',
                 style: GoogleFonts.roboto(
                     fontWeight: FontWeight.w400,
                     color: Colors.grey,
@@ -182,12 +192,12 @@ class _CardPageState extends ConsumerState<CardPage> {
     );
   }
 
-  Widget _moneyBox(BuildContext context) {
+  Widget _moneyBox(BuildContext context, String amount) {
     final size = MediaQuery.of(context).size;
-    final usdt = '1534.36';
+    final usdt = amount;
     String formattedAmount = NumberFormat.currency(
       locale: 'en_NG',
-      symbol: '\$',
+      symbol: '₦',
       decimalDigits: 2,
     ).format(double.tryParse(usdt));
 

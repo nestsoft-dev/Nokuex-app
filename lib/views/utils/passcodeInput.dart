@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nokuex/server/ServerCalls.dart';
 import 'package:nokuex/views/Auth/widgets/textInput.dart';
+import 'package:nokuex/views/utils/myToast.dart';
+import 'package:nokuex/views/withdrawal/FiatWithdrawalPage.dart';
 import 'package:pinput/pinput.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> showPassCodeInput(BuildContext context, VoidCallback success) {
   final size = MediaQuery.of(context).size;
@@ -103,9 +108,13 @@ Future<void> showPassCodeInput(BuildContext context, VoidCallback success) {
           ));
 }
 
-Future<void> showAddBank(BuildContext context,
-    TextEditingController bankController, TextEditingController bankNumber) {
+Future<void> showAddBank(
+    BuildContext context,
+    TextEditingController bankController,
+    TextEditingController bankNumber,
+    WidgetRef ref) {
   final size = MediaQuery.of(context).size;
+  final bankList = ref.watch(banklistProvider);
   return showModalBottomSheet(
       isDismissible: false,
       context: context,
@@ -156,7 +165,49 @@ Future<void> showAddBank(BuildContext context,
                   type: TextInputType.text,
                   isReadonly: true,
                   suffix: GestureDetector(
-                      onTap: () {},
+                      onTap: () {
+                        showModalBottomSheet(
+                            context: context,
+                            builder: (_) {
+                              return Container(
+                                height: size.height * .6,
+                                width: size.width,
+                                padding: EdgeInsets.all(10),
+                                color: Colors.black,
+                                child: bankList.when(
+                                    data: (bank) {
+                                      return ListView.builder(
+                                          itemCount: bank.length,
+                                          itemBuilder: (_, index) {
+                                            return ListTile(
+                                              onTap: () {
+                                                ref
+                                                    .read(bankProvider.notifier)
+                                                    .state = bank[index];
+                                                Navigator.of(context).pop();
+                                              },
+                                              leading: Text(
+                                                bank[index].name.toString(),
+                                                style: const TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                            );
+                                          });
+                                    },
+                                    error: (error, trace) => const Center(
+                                          child: Text(
+                                            'Error getting bank list',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                    loading: () => const Center(
+                                          child: CircularProgressIndicator
+                                              .adaptive(),
+                                        )),
+                              );
+                            });
+                      },
                       child: const Icon(
                         Icons.arrow_drop_down,
                         color: Colors.white,
@@ -390,6 +441,24 @@ Future<void> transactionPinChange(BuildContext context) {
   );
 
   final _pinCode = TextEditingController();
+  final _pinCodeNew = TextEditingController();
+  String oldPin;
+
+  savePin() async {
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+    final oldPin = pref.getString('pin') ?? '';
+    if (oldPin != '' && oldPin == _pinCode.text && _pinCodeNew != _pinCode) {
+      pref.setString('pin', _pinCodeNew.text);
+      successToast('New pin set');
+      Navigator.of(context).pop();
+    } else if (oldPin != _pinCode.text) {
+      errorToast('Old pin not correct');
+      Navigator.of(context).pop();
+    } else if (oldPin == _pinCodeNew.text) {
+      errorToast('Old and New code can not be same');
+      Navigator.of(context).pop();
+    }
+  }
 
   return showModalBottomSheet(
       isDismissible: false,
@@ -476,6 +545,135 @@ Future<void> transactionPinChange(BuildContext context) {
               Center(
                 child: Pinput(
                   length: 4,
+                  controller: _pinCodeNew,
+                  obscureText: true,
+                  defaultPinTheme: defaultPinTheme,
+                  // focusedPinTheme: focusedPinTheme,
+                  // submittedPinTheme: submittedPinTheme,
+                  validator: (s) {
+                    return s == _pinCode.text.isEmpty ? 'Pin is empty' : null;
+                  },
+                  pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                  showCursor: true,
+                  onCompleted: (pin) => print(pin),
+                ),
+              ),
+
+              Spacer(),
+              Center(
+                child: GestureDetector(
+                  onTap: () => savePin(),
+                  child: Container(
+                    height: size.height * .065,
+                    width: size.width * .9,
+                    decoration: BoxDecoration(
+                        color: Colors.orangeAccent,
+                        borderRadius:
+                            BorderRadius.circular(size.height * .025)),
+                    child: Center(
+                      child: Text(
+                        'Save pin',
+                        style: GoogleFonts.roboto(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white,
+                            fontSize: size.height * 0.016),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Spacer(),
+            ],
+          ),
+        );
+      });
+}
+
+Future<void> transactionPinNew(BuildContext context) {
+  final size = MediaQuery.of(context).size;
+  final defaultPinTheme = PinTheme(
+    width: 56,
+    height: 56,
+    textStyle: const TextStyle(
+        fontSize: 20, color: Colors.white, fontWeight: FontWeight.w600),
+    decoration: BoxDecoration(
+      color: const Color.fromARGB(255, 26, 26, 26).withOpacity(0.15),
+      border: Border.all(color: Color.fromRGBO(234, 239, 243, 1)),
+      borderRadius: BorderRadius.circular(10),
+    ),
+  );
+
+  final _pinCode = TextEditingController();
+  final _pinCodeNew = TextEditingController();
+
+  savePin() async {
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+
+    if (_pinCodeNew.text != _pinCode.text) {
+      errorToast('pin not same');
+      Navigator.of(context).pop();
+    } else if (_pinCodeNew.text == _pinCode.text) {
+      pref.setString('pin', _pinCode.text);
+      successToast('New pin set');
+      Navigator.of(context).pop();
+    }
+  }
+
+  return showModalBottomSheet(
+      isDismissible: false,
+      context: context,
+      builder: (_) {
+        return Container(
+          padding: EdgeInsets.all(15),
+          color: Colors.black,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              //title n close
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Create Transaction PIN',
+                    style: GoogleFonts.roboto(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: size.height * 0.02),
+                  ),
+                  GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.grey,
+                      ))
+                ],
+              ),
+              SizedBox(
+                height: size.height * .03,
+              ),
+              Text(
+                'Update your Transaction PIN',
+                style: GoogleFonts.roboto(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                    fontSize: size.height * 0.014),
+              ),
+              SizedBox(
+                height: size.height * .03,
+              ),
+              Text(
+                'Enter New PIN',
+                style: GoogleFonts.roboto(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                    fontSize: size.height * 0.014),
+              ),
+              SizedBox(
+                height: size.height * .02,
+              ),
+              Center(
+                child: Pinput(
+                  length: 4,
                   controller: _pinCode,
                   obscureText: true,
                   defaultPinTheme: defaultPinTheme,
@@ -491,21 +689,51 @@ Future<void> transactionPinChange(BuildContext context) {
               ),
 
               SizedBox(
-                height: size.height * .015,
+                height: size.height * .03,
+              ),
+              Text(
+                'Confirm New PIN',
+                style: GoogleFonts.roboto(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey,
+                    fontSize: size.height * 0.014),
+              ),
+              SizedBox(
+                height: size.height * .02,
+              ),
+              Center(
+                child: Pinput(
+                  length: 4,
+                  controller: _pinCodeNew,
+                  obscureText: true,
+                  defaultPinTheme: defaultPinTheme,
+                  // focusedPinTheme: focusedPinTheme,
+                  // submittedPinTheme: submittedPinTheme,
+                  validator: (s) {
+                    return s == _pinCode.text.isEmpty ? 'Pin is empty' : null;
+                  },
+                  pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                  showCursor: true,
+                  onCompleted: (pin) => print(pin),
+                ),
+              ),
+
+              SizedBox(
+                height: size.height * .02,
               ),
               Center(
                 child: GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: () => savePin(),
                   child: Container(
                     height: size.height * .07,
-                    width: size.width * .62,
+                    width: size.width * .85,
                     decoration: BoxDecoration(
-                        color: const Color(0xffFF9B01),
+                        color: Colors.orangeAccent,
                         borderRadius:
-                            BorderRadius.circular(size.height * .025)),
+                            BorderRadius.circular(size.height * .015)),
                     child: Center(
                       child: Text(
-                        'Add Account',
+                        'Save pin',
                         style: GoogleFonts.roboto(
                             fontWeight: FontWeight.w400,
                             color: Colors.white,

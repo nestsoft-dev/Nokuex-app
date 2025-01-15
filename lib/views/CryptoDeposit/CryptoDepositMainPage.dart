@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nokuex/models/addressModel.dart';
+import 'package:nokuex/models/supportedCoin.dart';
+import 'package:nokuex/server/ServerCalls.dart';
 import 'package:nokuex/views/Auth/widgets/textInput.dart';
+import 'package:nokuex/views/utils/myToast.dart';
 import 'package:nokuex/widgets/myButton.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
 
 final CryptoDepostMainPageIndexProvider = StateProvider((ref) => 0);
+
+final selectedCryptoProvider = StateProvider<CryptoCurrency?>((ref) => null);
+
+final selectedNetworkchainProvider = StateProvider<Chains?>((ref) => null);
 
 class CryptoDepostMainPage extends ConsumerWidget {
   CryptoDepostMainPage({super.key});
@@ -14,6 +23,14 @@ class CryptoDepostMainPage extends ConsumerWidget {
   final PageController pageController = PageController();
   final selectedCryptoController = TextEditingController();
   final coinNetworkController = TextEditingController();
+
+  @override
+  void dispose() {
+    selectedCryptoController.dispose();
+    coinNetworkController.dispose();
+
+    //  super.dispose();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,9 +81,9 @@ class CryptoDepostMainPage extends ConsumerWidget {
                     scrollDirection: Axis.horizontal,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
-                      _pageOne(context),
-                      _pageTwo(context),
-                      _pageThree(context),
+                      _pageOne(context, ref),
+                      _pageTwo(context, ref),
+                      _pageThree(context, ref),
                     ],
                   ),
                 );
@@ -78,8 +95,9 @@ class CryptoDepostMainPage extends ConsumerWidget {
     );
   }
 
-  Widget _pageThree(BuildContext context) {
+  Widget _pageThree(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
+    final CoinAddress? address = ref.watch(coinAddressProvider);
     return Column(
       children: [
         Container(
@@ -101,7 +119,9 @@ class CryptoDepostMainPage extends ConsumerWidget {
           ),
           child: Center(
             child: PrettyQrView.data(
-              data: 'lorem ipsum dolor sit amet',
+              data: address != null
+                  ? address.chain.addressDeposit
+                  : 'Address not correct',
             ),
           ),
         ),
@@ -125,7 +145,9 @@ class CryptoDepostMainPage extends ConsumerWidget {
           children: [
             Flexible(
               child: Text(
-                'vdyjsvjhdvjvjevsvlsvdvhsvdvikvdkkdvkdhjjljjnidh',
+                address != null
+                    ? address!.chain.addressDeposit
+                    : 'Address not correct',
                 style: GoogleFonts.roboto(
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
@@ -135,7 +157,11 @@ class CryptoDepostMainPage extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.all(5.0),
               child: GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Clipboard.setData(
+                        ClipboardData(text: address!.chain.addressDeposit));
+                  },
                   child: const Icon(
                     Icons.copy,
                     color: Color(0xffFF9B01),
@@ -163,7 +189,7 @@ class CryptoDepostMainPage extends ConsumerWidget {
                   width: size.width * .02,
                 ),
                 Text(
-                  'Tether',
+                  address != null ? address.coin! : '',
                   style: GoogleFonts.roboto(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -187,7 +213,7 @@ class CryptoDepostMainPage extends ConsumerWidget {
                   fontSize: size.height * 0.016),
             ),
             Text(
-              'Tron',
+              address != null ? address.chain.chainType! : '',
               style: GoogleFonts.roboto(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -209,8 +235,11 @@ class CryptoDepostMainPage extends ConsumerWidget {
     );
   }
 
-  Widget _pageTwo(BuildContext context) {
+  Widget _pageTwo(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
+    final selectedCoin = ref.watch(selectedCryptoProvider);
+    final selectedChain = ref.watch(selectedNetworkchainProvider);
+    final loading = ref.watch(loadingProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -228,7 +257,7 @@ class CryptoDepostMainPage extends ConsumerWidget {
                 width: size.width * .045,
               ),
               Text(
-                'Tether',
+                selectedCoin == null ? '' : selectedCoin!.name!,
                 style: GoogleFonts.roboto(
                     fontWeight: FontWeight.w500,
                     color: Colors.white,
@@ -245,9 +274,41 @@ class CryptoDepostMainPage extends ConsumerWidget {
           hint: 'Select Coin Network',
           controller: coinNetworkController,
           isPassword: false,
+          isReadonly: true,
           type: TextInputType.text,
           suffix: GestureDetector(
-            onTap: () {},
+            onTap: () {
+              showModalBottomSheet(
+                  context: context,
+                  builder: (_) {
+                    return Container(
+                        height: size.height * .5,
+                        width: size.width,
+                        padding: const EdgeInsets.all(10),
+                        color: Colors.black,
+                        child: ListView.builder(
+                            itemCount: selectedCoin!.chains!.length ?? 0,
+                            itemBuilder: (_, index) {
+                              return ListTile(
+                                onTap: () async {
+                                  ref
+                                      .read(
+                                          selectedNetworkchainProvider.notifier)
+                                      .state = selectedCoin!.chains![index];
+
+                                  coinNetworkController.text =
+                                      selectedCoin!.chains![index].chainType!;
+
+                                  Navigator.of(context).pop();
+                                },
+                                leading: Text(
+                                  selectedCoin!.chains![index].chainType!,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              );
+                            }));
+                  });
+            },
             child: const Icon(Icons.arrow_drop_down, color: Colors.white),
           ),
         ),
@@ -255,21 +316,28 @@ class CryptoDepostMainPage extends ConsumerWidget {
           height: size.height * .035,
         ),
         Center(
-          child: MyButton(
-              text: 'Get Address',
-              onTap: () {
-                pageController.nextPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.linearToEaseOut);
-                return;
-              }),
+          child: loading
+              ? const CircularProgressIndicator.adaptive()
+              : MyButton(
+                  text: 'Get Address',
+                  onTap: () async {
+                    ref.read(loadingProvider.notifier).state = true;
+                    await Servercalls().generateAddress(selectedCoin!.coin!,
+                        selectedChain!.chain ?? '', pageController, ref);
+
+                    ref.read(loadingProvider.notifier).state = false;
+                  }),
         )
       ],
     );
   }
 
-  Widget _pageOne(BuildContext context) {
+  Widget _pageOne(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
+    final supportedCoinList = ref.watch(allCoinListProvider);
+    final loading = ref.watch(loadingProvider);
+    final selectedCoin = ref.watch(selectedCryptoProvider);
+
     return Column(
       children: [
         MyInput(
@@ -280,7 +348,50 @@ class CryptoDepostMainPage extends ConsumerWidget {
           type: TextInputType.text,
           isReadonly: true,
           suffix: GestureDetector(
-            onTap: () {},
+            onTap: () {
+              showModalBottomSheet(
+                  context: context,
+                  builder: (_) {
+                    return Container(
+                      height: size.height * .5,
+                      width: size.width,
+                      padding: const EdgeInsets.all(10),
+                      color: Colors.black,
+                      child: supportedCoinList.when(
+                          data: (coin) {
+                            return ListView.builder(
+                                itemCount: coin.length,
+                                itemBuilder: (_, index) {
+                                  return ListTile(
+                                    onTap: () {
+                                      ref
+                                          .read(selectedCryptoProvider.notifier)
+                                          .state = coin[index];
+
+                                      selectedCryptoController.text =
+                                          coin[index].name!;
+                                      Navigator.of(context).pop();
+                                    },
+                                    leading: Text(
+                                      coin[index].coin!,
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                  );
+                                });
+                          },
+                          error: (error, trace) => const Center(
+                                child: Text(
+                                  'Network connection issue',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                          loading: () => const Center(
+                                child: CircularProgressIndicator.adaptive(),
+                              )),
+                    );
+                  });
+            },
             child: const Icon(
               Icons.arrow_drop_down,
               color: Colors.white,
@@ -291,14 +402,20 @@ class CryptoDepostMainPage extends ConsumerWidget {
           height: size.height * .03,
         ),
         Center(
-          child: MyButton(
-              text: 'Continue',
-              onTap: () {
-                pageController.nextPage(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.linearToEaseOut);
-                return;
-              }),
+          child: loading
+              ? const CircularProgressIndicator.adaptive()
+              : MyButton(
+                  text: 'Continue',
+                  onTap: () async {
+                    if (selectedCoin == null) {
+                      errorToast('Please select a crypto');
+                      return;
+                    }
+                    pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.linearToEaseOut);
+                    return;
+                  }),
         )
       ],
     );

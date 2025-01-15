@@ -23,6 +23,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 final userProvider = StateProvider<User?>((ref) => null);
 
+final loadingProvider = StateProvider<bool>((ref) => false);
+
 final coinlistProvider = FutureProvider<List<CryptoData>>((ref) async {
   List<CryptoData> crytodataList = [];
   try {
@@ -135,7 +137,7 @@ Stream<List<CoinBalance>> getCoinBalanceStream() async* {
     while (true) {
       final response =
           await http.get(Uri.parse('$url/api/crypto/all-mycoins/$token'));
-      print(response.body.toString());
+      print(response.body.toString() + '--------');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -176,7 +178,8 @@ final banklistProvider = FutureProvider<List<BankListModel>>((ref) async {
   List<BankListModel> listCoin = [];
   try {
     final response = await http.get(
-      Uri.parse('$url/api/banks/bank-list'),
+      Uri.parse(
+          'https://uitlhxiazg.execute-api.ap-southeast-1.amazonaws.com/api/banks/bank-list'),
     );
 
     if (response.statusCode == 200) {
@@ -334,6 +337,7 @@ class Servercalls {
     final SharedPreferences pref = await SharedPreferences.getInstance();
     try {
       var body = jsonEncode({'email': email});
+      print(body);
       final response = await http.post(
           Uri.parse('$url/api/user/verify-email-or-phone'),
           body: jsonDecode(body),
@@ -585,8 +589,10 @@ class Servercalls {
 
     print('$coin $chain');
     try {
-      final response = await http
-          .get(Uri.parse('$url/api/crypto/deposit-coin/$coin/$chain/$token'));
+      final Uri _url =
+          Uri.parse('$url/api/crypto/deposit-coin/$coin/$chain/$token');
+      print(_url);
+      final response = await http.get(_url);
       var data = jsonDecode(response.body);
       print(data);
       if (response.statusCode == 200) {
@@ -641,6 +647,7 @@ class Servercalls {
   //     throw Exception('An unexpected error occurred: $e');
   //   }
   // }
+
 
   Future<void> saveBankDetails(BuildContext context, String bankcode,
       String bankname, String accountnumber, String accountname) async {
@@ -769,4 +776,9 @@ class Servercalls {
       errorToast('Something went wrong: ${e.toString()}');
     }
   }
+
+
+
+
+
 }

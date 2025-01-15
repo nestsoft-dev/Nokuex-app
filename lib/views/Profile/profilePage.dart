@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nokuex/models/userModel.dart';
+import 'package:nokuex/server/ServerCalls.dart';
+import 'package:nokuex/views/Auth/login/loginPage.dart';
 import 'package:nokuex/views/Profile/contactPage.dart';
 import 'package:nokuex/views/Profile/myProfileEdit.dart';
 import 'package:nokuex/views/Profile/referralPage.dart';
 import 'package:nokuex/views/Profile/securityPage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -14,70 +19,73 @@ class ProfilePage extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     return Scaffold(
       body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: size.height * .08,
-              ),
-              _top(context),
-              SizedBox(
-                height: size.height * .07,
-              ),
-              _imageCard(context),
-              SizedBox(
-                height: size.height * .03,
-              ),
-              _nameCard(context),
-              SizedBox(
-                height: size.height * .03,
-              ),
-              //my profile
-              GestureDetector(
-                onTap: () => Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (_) => EditProfilePage())),
-                child: _cardItem(context, 'assets/user-edit.svg', 'My Profile',
-                    'Your profile and personal information'),
-              ),
-              SizedBox(
-                height: size.height * .013,
-              ),
-              GestureDetector(
-                onTap: () => Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (_) => SecurityPage())),
-                child: _cardItem(context, 'assets/security.svg', 'Security',
-                    'Manage how you access your account'),
-              ),
-              SizedBox(
-                height: size.height * .013,
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (_) => ReferralPage()));
-                },
-                child: _cardItem(
-                    context, 'assets/Gift.svg', 'Referral', 'Refer and earn'),
-              ),
-              SizedBox(
-                height: size.height * .013,
-              ),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (_) => ContactPage()));
-                },
-                child: _cardItem(context, 'assets/warning.svg', 'Help/Support',
-                    'Contact us for any issue'),
-              ),
-              SizedBox(
-                height: size.height * .013,
-              ),
-            ],
-          ),
-        ),
+        child: Consumer(builder: (_, ref, child) {
+          final _user = ref.watch(userProvider);
+          return Padding(
+            padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: size.height * .08,
+                ),
+                _top(context),
+                SizedBox(
+                  height: size.height * .07,
+                ),
+                _imageCard(context),
+                SizedBox(
+                  height: size.height * .03,
+                ),
+                _nameCard(context, _user!),
+                SizedBox(
+                  height: size.height * .03,
+                ),
+                //my profile
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => EditProfilePage())),
+                  child: _cardItem(context, 'assets/user-edit.svg',
+                      'My Profile', 'Your profile and personal information'),
+                ),
+                SizedBox(
+                  height: size.height * .013,
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (_) => SecurityPage())),
+                  child: _cardItem(context, 'assets/security.svg', 'Security',
+                      'Manage how you access your account'),
+                ),
+                SizedBox(
+                  height: size.height * .013,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ReferralPage()));
+                  },
+                  child: _cardItem(
+                      context, 'assets/Gift.svg', 'Referral', 'Refer and earn'),
+                ),
+                SizedBox(
+                  height: size.height * .013,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (_) => ContactPage()));
+                  },
+                  child: _cardItem(context, 'assets/warning.svg',
+                      'Help/Support', 'Contact us for any issue'),
+                ),
+                SizedBox(
+                  height: size.height * .013,
+                ),
+              ],
+            ),
+          );
+        }),
       ),
     );
   }
@@ -132,13 +140,13 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _nameCard(BuildContext context) {
+  Widget _nameCard(BuildContext context, User user) {
     final size = MediaQuery.of(context).size;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Hello, Ikenna',
+          'Hello, ${user.lastname}',
           style: GoogleFonts.roboto(
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -167,12 +175,20 @@ class ProfilePage extends StatelessWidget {
             color: Colors.grey,
           ),
         ),
-        Text(
-          'Logout',
-          style: GoogleFonts.roboto(
-              fontWeight: FontWeight.w400,
-              color: Colors.red,
-              fontSize: size.height * 0.016),
+        GestureDetector(
+          onTap: () async {
+            SharedPreferences pref = await SharedPreferences.getInstance();
+            pref.remove('token');
+            Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (_) => const LoginPage()));
+          },
+          child: Text(
+            'Logout',
+            style: GoogleFonts.roboto(
+                fontWeight: FontWeight.w400,
+                color: Colors.red,
+                fontSize: size.height * 0.016),
+          ),
         )
       ],
     );

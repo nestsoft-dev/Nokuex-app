@@ -3,9 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:nokuex/models/bankModel.dart';
+import 'package:nokuex/models/userBankModel.dart';
+import 'package:nokuex/server/ServerCalls.dart';
+import 'package:nokuex/views/utils/myToast.dart';
 import 'package:nokuex/views/utils/passcodeInput.dart';
 import 'package:nokuex/views/withdrawal/WithdrawalMainPage.dart';
 import 'package:nokuex/views/withdrawal/receiptPage.dart';
+
+final nairaSign = '₦';
+
+final bankProvider = StateProvider<BankListModel?>((ref) => null);
 
 class Fiatwithdrawalpage extends ConsumerStatefulWidget {
   const Fiatwithdrawalpage({super.key});
@@ -32,6 +40,8 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
     _selectedNetwork.dispose();
   }
 
+  UserBankModel? selectedBank;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -49,7 +59,6 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
             _pageOne(context, pageController),
             _pageTwo(context, pageController),
             _pageThree(context)
-             
           ],
         );
       },
@@ -225,7 +234,8 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
                   fontSize: size.height * 0.016),
             ),
             GestureDetector(
-              onTap: () => showAddBank(context, bankController, bankNumber),
+              onTap: () =>
+                  showAddBank(context, bankController, bankNumber, ref),
               child: Row(
                 children: [
                   const Icon(
@@ -252,30 +262,32 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
         ),
         _bankList(context),
 
-        GestureDetector(
-          onTap: () {
-            pageController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.linearToEaseOut);
-            return;
-          },
-          child: Container(
-            height: size.height * .07,
-            width: size.width * .62,
-            decoration: BoxDecoration(
-                color: const Color(0xffFF9B01),
-                borderRadius: BorderRadius.circular(size.height * .025)),
-            child: Center(
-              child: Text(
-                'Continue',
-                style: GoogleFonts.roboto(
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                    fontSize: size.height * 0.016),
+        selectedBank == null
+            ? const SizedBox.shrink()
+            : GestureDetector(
+                onTap: () {
+                  pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.linearToEaseOut);
+                  return;
+                },
+                child: Container(
+                  height: size.height * .07,
+                  width: size.width * .62,
+                  decoration: BoxDecoration(
+                      color: const Color(0xffFF9B01),
+                      borderRadius: BorderRadius.circular(size.height * .025)),
+                  child: Center(
+                    child: Text(
+                      'Continue',
+                      style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white,
+                          fontSize: size.height * 0.016),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
         SizedBox(
           height: size.height * .02,
         ),
@@ -287,101 +299,126 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
 
   Widget _bankList(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    int? selectedBank;
+    final _accounts = ref.watch(usersBankListProvider);
+
     return Consumer(
       builder: (context, ref, child) {
-        return Expanded(
-            child: ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                itemCount: 3,
-                itemBuilder: (_, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        if (selectedBank == index) {
-                          selectedBank = null;
-                        } else {
-                          selectedBank = index;
-                        }
-                        setState(() {});
-                        print(selectedBank);
-                      },
-                      child: Container(
-                        height: size.height * .08,
-                        padding: const EdgeInsets.all(10),
-                        width: size.width,
-                        decoration: BoxDecoration(
-                            color: Colors.black,
-                            borderRadius: BorderRadius.circular(10)),
-                        child: Stack(
-                          children: [
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    SvgPicture.asset('assets/btc.svg'),
-                                    SizedBox(
-                                      width: size.width * .02,
-                                    ),
-                                    Text(
-                                      'GTBank',
-                                      style: GoogleFonts.roboto(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: size.height * 0.016),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '******6374',
-                                      style: GoogleFonts.roboto(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey,
-                                          fontSize: size.height * 0.016),
-                                    ),
-                                    Text(
-                                      'Obetta ikenna',
-                                      style: GoogleFonts.roboto(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey,
-                                          fontSize: size.height * 0.016),
-                                    ),
-                                  ],
-                                )
-                              ],
-                            ),
-                            selectedBank == index
-                                ? const Positioned(
-                                    child: Icon(Icons.check_box_sharp,
-                                        color: Color(0xffFF9B01)),
-                                  )
-                                : const SizedBox.shrink()
-                          ],
-                        ),
+        return _accounts.when(
+            data: (data) {
+              return data.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No Bank account added yet',
+                        style: TextStyle(color: Colors.white),
                       ),
-                    ),
-                  );
-                }));
+                    )
+                  : Expanded(
+                      child: ListView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: EdgeInsets.zero,
+                          itemCount: data.length,
+                          itemBuilder: (_, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: GestureDetector(
+                                onTap: () {
+                                  if (selectedBank == index) {
+                                    selectedBank = null;
+                                  } else {
+                                    selectedBank = data[index];
+                                  }
+                                  setState(() {});
+                                  print(selectedBank);
+                                },
+                                child: Container(
+                                  height: size.height * .08,
+                                  padding: const EdgeInsets.all(10),
+                                  width: size.width,
+                                  decoration: BoxDecoration(
+                                      color: Colors.black,
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: Stack(
+                                    children: [
+                                      Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              SvgPicture.asset(
+                                                  'assets/btc.svg'),
+                                              SizedBox(
+                                                width: size.width * .02,
+                                              ),
+                                              Text(
+                                                data[index]!.bankname ?? '',
+                                                style: GoogleFonts.roboto(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                    fontSize:
+                                                        size.height * 0.016),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                data[index]!.accountNumber ??
+                                                    '',
+                                                style: GoogleFonts.roboto(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.grey,
+                                                    fontSize:
+                                                        size.height * 0.016),
+                                              ),
+                                              Text(
+                                                data[index]!.account_name ?? '',
+                                                style: GoogleFonts.roboto(
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.grey,
+                                                    fontSize:
+                                                        size.height * 0.016),
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                      selectedBank == data[index]
+                                          ? const Positioned(
+                                              child: Icon(Icons.check_box_sharp,
+                                                  color: Color(0xffFF9B01)),
+                                            )
+                                          : const SizedBox.shrink()
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }));
+            },
+            error: (error, trace) => const Text(
+                  'Error getting banks',
+                  style: TextStyle(color: Colors.white),
+                ),
+            loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ));
       },
     );
   }
 
   Widget _moneyBoxTwo(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final usdt = '1534.36';
+    final user = ref.watch(userProvider);
+    final usdt = user!.nairaBalance.toStringAsFixed(2);
     String formattedAmount = NumberFormat().format(double.tryParse(usdt));
 
     final rate = '1534.00';
     String formattedrate = NumberFormat.currency(
       locale: 'en_NG',
-      symbol: '\$',
+      symbol: nairaSign,
       decimalDigits: 2,
     ).format(double.tryParse(usdt));
     return Container(
@@ -421,9 +458,10 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
 
   Widget _pageOne(BuildContext context, PageController pageController) {
     final size = MediaQuery.of(context).size;
+    final user = ref.watch(userProvider);
     return Column(
       children: [
-        _moneyBox(context),
+        _moneyBox(context, user!.nairaBalance.toStringAsFixed(2)),
         SizedBox(
           height: size.height * .02,
         ),
@@ -433,6 +471,19 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
         ),
         GestureDetector(
           onTap: () {
+            if (amountInputController.text.isEmpty) {
+              errorToast('Please enter an amount');
+              return;
+            }
+            if (double.parse(amountInputController.text) > user.nairaBalance) {
+              errorToast('Insufficient Balance');
+              return;
+            }
+
+            if (double.parse(amountInputController.text) < 200) {
+              return errorToast('Please amount can not be below 200');
+            }
+
             pageController.nextPage(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.linearToEaseOut);
@@ -462,6 +513,7 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
   Widget _pageOneInput(
       BuildContext context, TextEditingController? controller) {
     final size = MediaQuery.of(context).size;
+    final user = ref.watch(userProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -487,7 +539,10 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
               fontSize: size.height * 0.03),
           decoration: InputDecoration(
               suffix: GestureDetector(
-            onTap: () {},
+            onTap: () {
+              controller!.text = user!.nairaBalance.toStringAsFixed(2);
+              setState(() {});
+            },
             child: Text(
               'MAX',
               style: GoogleFonts.roboto(
@@ -501,12 +556,12 @@ class _FiatwithdrawalpageState extends ConsumerState<Fiatwithdrawalpage> {
     );
   }
 
-  Widget _moneyBox(BuildContext context) {
+  Widget _moneyBox(BuildContext context, String balance) {
     final size = MediaQuery.of(context).size;
-    final usdt = '1534.36';
+    final usdt = balance;
     String formattedAmount = NumberFormat.currency(
       locale: 'en_NG',
-      symbol: '\$',
+      symbol: '₦',
       decimalDigits: 2,
     ).format(double.tryParse(usdt));
 

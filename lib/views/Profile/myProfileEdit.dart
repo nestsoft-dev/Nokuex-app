@@ -2,23 +2,27 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nokuex/server/ServerCalls.dart';
 import 'package:nokuex/views/Auth/widgets/textInput.dart';
 import 'package:nokuex/widgets/myButton.dart';
 
 class EditProfilePage extends ConsumerWidget {
   EditProfilePage({super.key});
-  final firstName = TextEditingController(text: 'Obetta');
-  final lastName = TextEditingController(text: 'ikenna');
-  final email = TextEditingController(text: 'obettaikenna19@gmail.com');
-  final number = TextEditingController(text: '9138473122');
-  String countryCode = '';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
+
+    final user = ref.watch(userProvider);
+
+    final firstName = TextEditingController(text: user!.lastname);
+    final lastName = TextEditingController(text: user!.firstname);
+    final email = TextEditingController(text: user!.email);
+    final number = TextEditingController(text: user!.phone.split('+234')[1]);
+    String countryCode = '+234';
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -105,8 +109,8 @@ class EditProfilePage extends ConsumerWidget {
                               // });
                             },
                             // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
-                            initialSelection: 'IT',
-                            favorite: ['+39', 'FR'],
+                            initialSelection: countryCode,
+                            //favorite: ['+39', 'FR'],
                             // optional. Shows only country name and flag
                             showCountryOnly: false,
                             // optional. Shows only country name and flag when popup is closed.

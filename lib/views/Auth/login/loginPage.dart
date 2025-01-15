@@ -28,28 +28,30 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final size = MediaQuery.of(context).size;
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Padding(
-        padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-        child: Column(
-          children: [
-            _topBox(context),
-            _inputCard(
-                context,
-                _emailController,
-                _passwordController,
-                GestureDetector(
-                  onTap: () => setState(() {
-                    isPassword = !isPassword;
-                  }),
-                  child: Text(
-                    isPassword ? 'Show' : 'Hide',
-                    style: GoogleFonts.roboto(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: size.height * .015),
-                  ),
-                )),
-          ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+          child: Column(
+            children: [
+              _topBox(context),
+              _inputCard(
+                  context,
+                  _emailController,
+                  _passwordController,
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      isPassword = !isPassword;
+                    }),
+                    child: Text(
+                      isPassword ? 'Show' : 'Hide',
+                      style: GoogleFonts.roboto(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: size.height * .015),
+                    ),
+                  )),
+            ],
+          ),
         ),
       ),
     );

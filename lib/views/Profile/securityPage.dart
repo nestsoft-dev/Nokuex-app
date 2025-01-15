@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:nokuex/views/Profile/preferencesPage.dart';
 import 'package:nokuex/views/utils/passcodeInput.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SecurityPage extends ConsumerWidget {
   SecurityPage({super.key});
@@ -16,7 +17,7 @@ class SecurityPage extends ConsumerWidget {
     final size = MediaQuery.of(context).size;
     return Scaffold(
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -52,7 +53,17 @@ class SecurityPage extends ConsumerWidget {
               height: size.height * .015,
             ),
             _cardItem(context, 'assets/pin.svg', 'Transaction PIN',
-                'Change Transaction PIN', () => transactionPinChange(context)),
+                'Change Transaction PIN', () async {
+              final SharedPreferences pref =
+                  await SharedPreferences.getInstance();
+              final oldPin = pref.getString('pin') ?? '';
+              print('Here is  your pin $oldPin');
+              if (oldPin != null || oldPin == '') {
+                return transactionPinChange(context);
+              } else {
+                return transactionPinNew(context);
+              }
+            }),
             SizedBox(
               height: size.height * .015,
             ),
